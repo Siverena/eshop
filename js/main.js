@@ -6,9 +6,8 @@ class List {
         this.goods = [];
         this.allProducts = [];
         this.path = path;
-
-
-        // this._fetchProducts(); //рекомендация, чтобы метод был вызван в текущем классе
+        this.filtered = []; // отфильтрованные товары
+        this._init();
         this._getProducts()
             .then(data => {
                 this._parseData(data);
@@ -30,7 +29,22 @@ class List {
     _parseData(data) {
         this.goods = [...data];
     }
+    filter(value) {
+        const regexp = new RegExp(value, 'i');
+        this.filtered = this.allProducts.filter(product => regexp.test(product.title));
+        this.allProducts.forEach(el => {
+            const block = document.querySelector(`.product-item[data-id="${el.id}"]`);
+            if (!this.filtered.includes(el)) {
+                block.classList.add('invisible');
+            } else {
+                block.classList.remove('invisible');
+            }
+        })
+    }
     render() {}
+    _init() {
+        return false;
+    }
 }
 
 class ProductList extends List {
@@ -40,10 +54,17 @@ class ProductList extends List {
 
 
     }
+    _init() {
+        document.querySelector('.search-form').addEventListener('submit', e => {
+            e.preventDefault();
+            this.filter(document.querySelector('.search-field').value);
+        })
+    }
     render() {
         const block = document.querySelector(this.container);
         for (let product of this.goods) {
             const item = new ProductItem(product);
+            this.allProducts.push(item);
             block.insertAdjacentHTML("beforeend", item.render());
             block.querySelector(`[data-id='${item.id}']`).addEventListener("click", (evt) => {
                 if (evt.target.nodeName != "BUTTON") {
@@ -52,17 +73,13 @@ class ProductList extends List {
                 this.cart.addItem(item);
             });
 
-            //           block.innerHTML += item.render();
         }
     }
 }
 class CartList extends List {
     constructor(container = '.cart-block', path = 'getBasket.json') {
         super(container, path);
-        this._calcSumm();
         this._onCartBtnClick();
-        // this.amount = product.amount;
-        // this.countGoods = product.countGoods;
 
     }
     addItem(item) {
@@ -121,16 +138,6 @@ class CartList extends List {
         this.amount = data.amount;
         this.countGoods = data.countGoods;
     }
-    _calcSumm() {
-        // подсчет итоговой стоимости товара
-    }
-    _calcTotalQuantity() {
-        //подсчет общего количества товаров в корзине
-    }
-
-    clearCart() {
-        //очищение корзины
-    }
     render() {
         const block = document.querySelector(this.container);
         for (let product of this.goods) {
@@ -154,18 +161,13 @@ class Item {
         this.id = product.id_product;
         this.price = product.price;
         this.img = img;
-        // this.quantity = product.quantity;
     }
 }
 
 class ProductItem extends Item {
     constructor(product, img = 'https://via.placeholder.com/200x150') {
         super(product, img);
-        // clicToItem();
-        // this.quantity = product.quantity;
     }
-
-
     render() {
 
         return `<div class="product-item" data-id="${this.id}">
@@ -199,12 +201,6 @@ class CartItem extends Item {
         <button class="del-btn" data-id="${this.id}">×</button>
     </div>
     </div>`
-    }
-    _changeSumm() {
-        // пересчет суммы за товар
-    }
-    _changeQuantity() {
-        //изменение количества
     }
 }
 
